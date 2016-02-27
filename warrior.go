@@ -6,17 +6,17 @@ type Warrior struct {
 	Task *TaskQueue
 }
 
-// GetTask ...
+// GetTask gets the next task
 func (w *Warrior) GetTask() int {
 	return w.Task.Pop()
 }
 
-// QueueTask ...
+// QueueTask queues the next task
 func (w *Warrior) QueueTask(address int) {
 	w.Task.Push(address)
 }
 
-// Alive ...
+// Alive checks if the warrior is still alive
 func (w *Warrior) Alive() bool {
 	return w.Task.count != 0
 }

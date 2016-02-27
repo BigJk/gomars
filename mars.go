@@ -15,25 +15,25 @@ type MARS struct {
 	warrior    [][]Command
 }
 
-// CreateMars creates a new mars
+// CreateMars creates a new MARS
 func CreateMars(coresize, maxProcess, cycles, maxLength int) MARS {
 	rand.Seed(time.Now().Unix())
 	return MARS{coresize, maxProcess, cycles, maxLength, CreateCore(coresize), make([][]Command, 0)}
 }
 
-// AddWarrior ...
+// AddWarrior adds a new warrior into the MARS
 func (m *MARS) AddWarrior(commands []Command) {
 	m.warrior = append(m.warrior, commands)
 }
 
-// PlaceWarrior ...
+// PlaceWarrior places a warrior in the core
 func (m *MARS) PlaceWarrior(position int, commands []Command) {
 	m.Core.PlaceWarrior(position, commands)
 	m.Core.Warriors[len(m.Core.Warriors)-1].Task = NewTaskQueue(m.MaxProcess)
 	m.Core.Warriors[len(m.Core.Warriors)-1].Task.Push(position)
 }
 
-// ClearMars ...
+// ClearMars cleans the MARS
 func (m *MARS) ClearMars() {
 	m.warrior = make([][]Command, 0)
 	for i := 0; i < m.Coresize; i++ {
@@ -42,7 +42,7 @@ func (m *MARS) ClearMars() {
 	m.Core.Warriors = make([]Warrior, 0)
 }
 
-// Run ...
+// Run executes the warrior in the core over multiple rounds
 func (m *MARS) Run(rounds int) map[int]int {
 	m.Core.PSpace = make([][]int, len(m.warrior))
 	for i := 0; i < len(m.warrior); i++ {
@@ -83,7 +83,7 @@ func (m *MARS) Run(rounds int) map[int]int {
 	return w
 }
 
-// RunSingle ...
+// RunSingle runs a singe round with a given offset to shift the starting warrior
 func (m *MARS) RunSingle(offset int) int {
 	wl := len(m.Core.Warriors)
 

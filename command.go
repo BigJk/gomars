@@ -64,17 +64,17 @@ type Command struct {
 	B               int
 }
 
-// Print ...
+// Print prints a command
 func (c *Command) Print() {
 	fmt.Println(c.OpCode.String(), c.Modifier.String(), c.AddressingModeA.String(), c.A, c.AddressingModeB.String(), c.B)
 }
 
-// Equal ...
+// Equal checks if two commands are equal
 func (c *Command) Equal(o *Command) bool {
 	return c.OpCode == o.OpCode && c.Modifier == o.Modifier && c.AddressingModeA == o.AddressingModeA && c.A == o.A && c.AddressingModeB == o.AddressingModeB && c.B == o.B
 }
 
-// Clone ...
+// Clone clones the command
 func (c *Command) Clone() Command {
 	return Command{c.OpCode, c.Modifier, c.AddressingModeA, c.A, c.AddressingModeB, c.B}
 }

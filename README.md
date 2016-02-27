@@ -27,5 +27,6 @@ fmt.Println("Ties", r[-1])
 ## todo
 
 + Adding org and end
++ Fixing PSpace (implemented but not fully working yet)
 + Adding a parser (currently only "compiled" warriors will work)
 + Finishing MultiMARS for multi-core support

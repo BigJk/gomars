@@ -22,7 +22,7 @@ func CreateCore(size int) Core {
 	return c
 }
 
-// Print ...
+// Print prints a section of the core
 func (c *Core) Print(s, e int) {
 	fmt.Println("=====================")
 	for i := 0; i < e; i++ {
@@ -31,7 +31,7 @@ func (c *Core) Print(s, e int) {
 	fmt.Println("=====================")
 }
 
-// Alive ...
+// Alive counts how many warrior are still alive
 func (c *Core) Alive() int {
 	a := 0
 	for i := 0; i < len(c.Warriors); i++ {
@@ -60,7 +60,7 @@ func (c *Core) PlaceWarrior(position int, commands []Command) {
 	}
 }
 
-// GetAddress ...
+// GetAddress returns the address and the postincrement address
 func (c *Core) GetAddress(position, value int, addressingMode AddressingMode) (int, int) {
 	vp := c.NormalizeAddress(position + value)
 
@@ -88,14 +88,14 @@ func (c *Core) GetAddress(position, value int, addressingMode AddressingMode) (i
 	return 0, 0
 }
 
-// GetAddresses ...
+// GetAddresses gets both addresses of the a and b field and also returns their addresses for postincrement
 func (c *Core) GetAddresses(position int) (int, int, int, int) {
 	a, apost := c.GetAddress(position, c.Memory[position].A, c.Memory[position].AddressingModeA)
 	b, bpost := c.GetAddress(position, c.Memory[position].B, c.Memory[position].AddressingModeB)
 	return a, b, apost, bpost
 }
 
-// NormalizeAddress ...
+// NormalizeAddress folds the address around the core
 func (c *Core) NormalizeAddress(address int) int {
 	if address >= 0 && address < c.Size {
 		return address
@@ -107,7 +107,7 @@ func (c *Core) NormalizeAddress(address int) int {
 	return r
 }
 
-// NormalizePSpaceAddress ...
+// NormalizePSpaceAddress folds the address around the pspace
 func (c *Core) NormalizePSpaceAddress(address int) int {
 	if address >= 0 && address < c.SizePSpace {
 		return address
@@ -119,7 +119,7 @@ func (c *Core) NormalizePSpaceAddress(address int) int {
 	return r
 }
 
-// ExecuteCommand ...
+// ExecuteCommand executes a single command at the given address
 func (c *Core) ExecuteCommand(w *Warrior, address int) {
 	a, b, apost, bpost := c.GetAddresses(address)
 	cmd := c.Memory[address]
@@ -176,7 +176,7 @@ func (c *Core) ExecuteCommand(w *Warrior, address int) {
 
 }
 
-// Execute ...
+// Execute executes the next warrior task
 func (c *Core) Execute(w *Warrior) {
 	if !w.Alive() {
 		return
