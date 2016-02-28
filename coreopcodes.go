@@ -1,6 +1,6 @@
 package gomars
 
-func (c *Core) mov(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
+func (c *Core) mov(aAddr, bAddr int, m Modifier, baseAddress int, w *CoreWarrior) {
 	switch m {
 	case a:
 		c.Memory[bAddr].A = c.Memory[aAddr].A
@@ -22,7 +22,7 @@ func (c *Core) mov(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
 	w.QueueTask(c.NormalizeAddress(baseAddress + 1))
 }
 
-func (c *Core) add(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
+func (c *Core) add(aAddr, bAddr int, m Modifier, baseAddress int, w *CoreWarrior) {
 	switch m {
 	case a:
 		c.Memory[bAddr].A = c.Memory[bAddr].A + c.Memory[aAddr].A
@@ -42,7 +42,7 @@ func (c *Core) add(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
 	w.QueueTask(c.NormalizeAddress(baseAddress + 1))
 }
 
-func (c *Core) sub(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
+func (c *Core) sub(aAddr, bAddr int, m Modifier, baseAddress int, w *CoreWarrior) {
 	switch m {
 	case a:
 		c.Memory[bAddr].A = c.Memory[bAddr].A - c.Memory[aAddr].A
@@ -62,7 +62,7 @@ func (c *Core) sub(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
 	w.QueueTask(c.NormalizeAddress(baseAddress + 1))
 }
 
-func (c *Core) mul(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
+func (c *Core) mul(aAddr, bAddr int, m Modifier, baseAddress int, w *CoreWarrior) {
 	switch m {
 	case a:
 		c.Memory[bAddr].A = c.Memory[bAddr].A * c.Memory[aAddr].A
@@ -82,7 +82,7 @@ func (c *Core) mul(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
 	w.QueueTask(c.NormalizeAddress(baseAddress + 1))
 }
 
-func (c *Core) div(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
+func (c *Core) div(aAddr, bAddr int, m Modifier, baseAddress int, w *CoreWarrior) {
 	switch m {
 	case a:
 		if c.Memory[aAddr].A == 0 {
@@ -120,7 +120,7 @@ func (c *Core) div(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
 	w.QueueTask(c.NormalizeAddress(baseAddress + 1))
 }
 
-func (c *Core) mod(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
+func (c *Core) mod(aAddr, bAddr int, m Modifier, baseAddress int, w *CoreWarrior) {
 	switch m {
 	case a:
 		if c.Memory[aAddr].A == 0 {
@@ -158,11 +158,11 @@ func (c *Core) mod(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
 	w.QueueTask(c.NormalizeAddress(baseAddress + 1))
 }
 
-func (c *Core) jmp(aAddr int, baseAddress int, w *Warrior) {
+func (c *Core) jmp(aAddr int, baseAddress int, w *CoreWarrior) {
 	w.QueueTask(c.NormalizeAddress(aAddr))
 }
 
-func (c *Core) jmz(aAddr, bAddr int, baseAddress int, w *Warrior) {
+func (c *Core) jmz(aAddr, bAddr int, baseAddress int, w *CoreWarrior) {
 	if c.Memory[bAddr].B == 0 {
 		w.QueueTask(c.NormalizeAddress(aAddr))
 	} else {
@@ -170,7 +170,7 @@ func (c *Core) jmz(aAddr, bAddr int, baseAddress int, w *Warrior) {
 	}
 }
 
-func (c *Core) jmn(aAddr, bAddr int, baseAddress int, w *Warrior) {
+func (c *Core) jmn(aAddr, bAddr int, baseAddress int, w *CoreWarrior) {
 	if c.Memory[bAddr].B != 0 {
 		w.QueueTask(c.NormalizeAddress(aAddr))
 	} else {
@@ -178,7 +178,7 @@ func (c *Core) jmn(aAddr, bAddr int, baseAddress int, w *Warrior) {
 	}
 }
 
-func (c *Core) djn(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
+func (c *Core) djn(aAddr, bAddr int, m Modifier, baseAddress int, w *CoreWarrior) {
 	switch m {
 	case a, ba:
 		c.Memory[bAddr].A--
@@ -205,12 +205,12 @@ func (c *Core) djn(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
 	}
 }
 
-func (c *Core) spl(aAddr int, baseAddress int, w *Warrior) {
+func (c *Core) spl(aAddr int, baseAddress int, w *CoreWarrior) {
 	w.QueueTask(c.NormalizeAddress(baseAddress + 1))
 	w.QueueTask(c.NormalizeAddress(aAddr))
 }
 
-func (c *Core) seq(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
+func (c *Core) seq(aAddr, bAddr int, m Modifier, baseAddress int, w *CoreWarrior) {
 	switch m {
 	case i:
 		if c.Memory[aAddr].Equal(&c.Memory[bAddr]) {
@@ -257,7 +257,7 @@ func (c *Core) seq(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
 	}
 }
 
-func (c *Core) sne(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
+func (c *Core) sne(aAddr, bAddr int, m Modifier, baseAddress int, w *CoreWarrior) {
 	switch m {
 	case i:
 		if !c.Memory[aAddr].Equal(&c.Memory[bAddr]) {
@@ -304,7 +304,7 @@ func (c *Core) sne(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
 	}
 }
 
-func (c *Core) slt(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
+func (c *Core) slt(aAddr, bAddr int, m Modifier, baseAddress int, w *CoreWarrior) {
 	switch m {
 	case a:
 		if c.Memory[aAddr].A < c.Memory[bAddr].A {
@@ -345,7 +345,7 @@ func (c *Core) slt(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
 	}
 }
 
-func (c *Core) stp(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
+func (c *Core) stp(aAddr, bAddr int, m Modifier, baseAddress int, w *CoreWarrior) {
 	w.QueueTask(c.NormalizeAddress(baseAddress + 1))
 	switch m {
 	case a:
@@ -375,7 +375,7 @@ func (c *Core) stp(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
 	}
 }
 
-func (c *Core) ldp(aAddr, bAddr int, m Modifier, baseAddress int, w *Warrior) {
+func (c *Core) ldp(aAddr, bAddr int, m Modifier, baseAddress int, w *CoreWarrior) {
 	w.QueueTask(c.NormalizeAddress(baseAddress + 1))
 	switch m {
 	case a:

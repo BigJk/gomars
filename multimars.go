@@ -6,18 +6,18 @@ type MultiMARS struct {
 }
 
 // CreateMultiMars ...
-func CreateMultiMars(coresize, maxProcess, cycles, maxLength, marsCount int) MultiMARS {
+func CreateMultiMars(coresize, maxProcess, cycles, maxLength, minDistance, marsCount int) MultiMARS {
 	m := MultiMARS{}
 	for i := 0; i < marsCount; i++ {
-		m.MARSs = append(m.MARSs, CreateMars(coresize, maxProcess, cycles, maxLength))
+		m.MARSs = append(m.MARSs, CreateMars(coresize, maxProcess, cycles, maxLength, minDistance))
 	}
 	return m
 }
 
 // AddWarrior ...
-func (m *MultiMARS) AddWarrior(commands []Command) {
+func (m *MultiMARS) AddWarrior(w Warrior) {
 	for i := 0; i < len(m.MARSs); i++ {
-		m.MARSs[i].AddWarrior(commands)
+		m.MARSs[i].AddWarrior(w)
 	}
 }
 

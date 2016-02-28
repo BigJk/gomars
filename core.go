@@ -6,7 +6,7 @@ var emptyCommand = Command{0, 0, 0, 0, 0, 0}
 
 // Core is the virtual memory that the MARS uses
 type Core struct {
-	Warriors   []Warrior
+	Warriors   []CoreWarrior
 	Memory     []Command
 	PSpace     [][]int
 	Size       int
@@ -54,7 +54,7 @@ func (c *Core) IsEmpty(s, e int) bool {
 
 // PlaceWarrior places a warrior in the core
 func (c *Core) PlaceWarrior(position int, commands []Command) {
-	c.Warriors = append(c.Warriors, Warrior{})
+	c.Warriors = append(c.Warriors, CoreWarrior{})
 	for i := 0; i < len(commands); i++ {
 		c.Memory[position+i] = commands[i]
 	}
@@ -120,7 +120,7 @@ func (c *Core) NormalizePSpaceAddress(address int) int {
 }
 
 // ExecuteCommand executes a single command at the given address
-func (c *Core) ExecuteCommand(w *Warrior, address int) {
+func (c *Core) ExecuteCommand(w *CoreWarrior, address int) {
 	a, b, apost, bpost := c.GetAddresses(address)
 	cmd := c.Memory[address]
 
@@ -177,7 +177,7 @@ func (c *Core) ExecuteCommand(w *Warrior, address int) {
 }
 
 // Execute executes the next warrior task
-func (c *Core) Execute(w *Warrior) {
+func (c *Core) Execute(w *CoreWarrior) {
 	if !w.Alive() {
 		return
 	}

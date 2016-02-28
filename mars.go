@@ -5,41 +5,54 @@ import (
 	"time"
 )
 
+// Warrior ...
+type Warrior struct {
+	EntryPoint int
+	Code       []Command
+}
+
 // MARS is the simulator
 type MARS struct {
-	Coresize   int
-	MaxProcess int
-	Cycles     int
-	MaxLength  int
-	Core       Core
-	warrior    [][]Command
+	Coresize    int
+	MaxProcess  int
+	MaxCycles   int
+	MaxLength   int
+	MinDistance int
+	Core        Core
+	warrior     []Warrior
 }
 
 // CreateMars creates a new MARS
-func CreateMars(coresize, maxProcess, cycles, maxLength int) MARS {
+func CreateMars(coresize, maxProcess, maxCycles, maxLength, minDistance int) MARS {
 	rand.Seed(time.Now().Unix())
-	return MARS{coresize, maxProcess, cycles, maxLength, CreateCore(coresize), make([][]Command, 0)}
+	return MARS{coresize, maxProcess, maxCycles, maxLength, minDistance, CreateCore(coresize), make([]Warrior, 0)}
+}
+
+// AddWarriorString adds a warrior from string
+func (m *MARS) AddWarriorString(wstr string) {
+	w := ParseWarrior(m.ParseToLoadFile(wstr))
+	m.AddWarrior(w)
 }
 
 // AddWarrior adds a new warrior into the MARS
-func (m *MARS) AddWarrior(commands []Command) {
-	m.warrior = append(m.warrior, commands)
+func (m *MARS) AddWarrior(w Warrior) {
+	m.warrior = append(m.warrior, w)
 }
 
 // PlaceWarrior places a warrior in the core
-func (m *MARS) PlaceWarrior(position int, commands []Command) {
-	m.Core.PlaceWarrior(position, commands)
+func (m *MARS) PlaceWarrior(position int, w Warrior) {
+	m.Core.PlaceWarrior(position, w.Code)
 	m.Core.Warriors[len(m.Core.Warriors)-1].Task = NewTaskQueue(m.MaxProcess)
-	m.Core.Warriors[len(m.Core.Warriors)-1].Task.Push(position)
+	m.Core.Warriors[len(m.Core.Warriors)-1].Task.Push(position + w.EntryPoint)
 }
 
 // ClearMars cleans the MARS
 func (m *MARS) ClearMars() {
-	m.warrior = make([][]Command, 0)
+	m.warrior = make([]Warrior, 0)
 	for i := 0; i < m.Coresize; i++ {
 		m.Core.Memory[i] = Command{0, 0, 0, 0, 0, 0}
 	}
-	m.Core.Warriors = make([]Warrior, 0)
+	m.Core.Warriors = make([]CoreWarrior, 0)
 }
 
 // Run executes the warrior in the core over multiple rounds
@@ -56,15 +69,15 @@ func (m *MARS) Run(rounds int) map[int]int {
 			m.Core.Memory[j] = Command{0, 0, 0, 0, 0, 0}
 		}
 
-		m.Core.Warriors = make([]Warrior, 0)
+		m.Core.Warriors = make([]CoreWarrior, 0)
 
 		m.PlaceWarrior(0, m.warrior[0])
 		m.Core.Warriors[0].ID = 0
 
 		for j := 1; j < len(m.warrior); j++ {
 			pos := 0
-			for !m.Core.IsEmpty(pos, len(m.warrior[j])) {
-				pos = random(m.MaxLength, m.Coresize-len(m.warrior[j]))
+			for !m.Core.IsEmpty(pos, len(m.warrior[j].Code)) {
+				pos = random(m.MinDistance, m.Coresize-len(m.warrior[j].Code))
 			}
 			m.PlaceWarrior(pos, m.warrior[j])
 			m.Core.Warriors[j].ID = j
@@ -87,7 +100,7 @@ func (m *MARS) Run(rounds int) map[int]int {
 func (m *MARS) RunSingle(offset int) int {
 	wl := len(m.Core.Warriors)
 
-	for i := 0; i < m.Cycles; i++ {
+	for i := 0; i < m.MaxCycles; i++ {
 		if m.Core.Alive() <= 1 {
 			break
 		}

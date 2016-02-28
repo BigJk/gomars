@@ -6,18 +6,17 @@ gomars is a CoreWar MARS written in go.
 ## example
 
 ```
-m := gomars.CreateMars(8000, 8000, 80000, 200) // CoreSize, MaxProcess, Cycles, MaxLength
+m := gomars.CreateMars(8000, 8000, 80000, 200, 200) // CoreSize, MaxProcess, MaxCycles, MaxLength, MinDIstance
 
 w1b, _ := ioutil.ReadFile("warrior1.red")
 w2b, _ := ioutil.ReadFile("warrior2.red")
 
-w1 := gomars.ParseWarrior(string(w1b))
-w2 := gomars.ParseWarrior(string(w2b))
+m.AddWarriorString(string(w1b))
+m.AddWarriorString(string(w2b))
 
-m.AddWarrior(w1)
-m.AddWarrior(w2)
-
-r := m.Run(1000)
+start := time.Now()
+r := m.Run(100)
+elapsed := time.Since(start)
 
 fmt.Println("Wins #1", r[0])
 fmt.Println("Wins #2", r[1])
@@ -26,7 +25,5 @@ fmt.Println("Ties", r[-1])
 
 ## todo
 
-+ Adding org and end
 + Fixing PSpace (implemented but not fully working yet)
-+ Adding a parser (currently only "compiled" warriors will work)
 + Finishing MultiMARS for multi-core support
