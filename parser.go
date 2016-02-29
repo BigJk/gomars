@@ -25,10 +25,10 @@ func (s stringSorter) Less(i, j int) bool {
 var comma = regexp.MustCompile("[ ]*,[ ]*")
 var comments = regexp.MustCompile(";.*\n")
 var emptySpace = regexp.MustCompile("[ 	]+")
-var isFormular = regexp.MustCompile("[0-9][+\\-*\\/%][0-9]")
+var isFormular = regexp.MustCompile("[0-9][+\\-*\\/%]+[0-9]")
 var field = regexp.MustCompile("^([*#{}$<>@])(.*)")
 var addressingModes = regexp.MustCompile("([a-z]{3}) ([*#{}$<>@]).*, ([*#{}$<>@])")
-var isNumber = regexp.MustCompile("[0-9]+")
+var isNoNumber = regexp.MustCompile("[a-zA-Z]+")
 
 var opcodes = []string{"dat", "mov", "add", "sub", "mul", "div", "mod", "jmp", "jmz", "jmn", "djn", "spl", "seq", "sne", "cmp", "slt", "nop", "ldp", "stp"}
 var modifier = []string{"*", "#", "{", "}", "$", ">", "<", "@"}
@@ -176,13 +176,17 @@ func (m *MARS) ParseToLoadFile(warrior string) string {
 
 	}
 
+	if org == "" && end != "" {
+		org = end
+	}
+
 	if org != "" {
-		if !isNumber.MatchString(org) {
-			org = fmt.Sprint(labels[org])
-		}
-	} else if end != "" {
-		if !isNumber.MatchString(org) {
-			org = fmt.Sprint(labels[end])
+		if isNoNumber.MatchString(org) {
+			for j := 0; j < len(labelKeys); j++ {
+				org = strings.Replace(org, labelKeys[j], fmt.Sprint(labels[labelKeys[j]]), -1)
+			}
+			v, _ := env.Eval(org)
+			org = fmt.Sprint(v)
 		}
 	} else {
 		org = "0"
@@ -242,7 +246,12 @@ func isOpcode(s string) bool {
 }
 
 func fixForumlar(s string) string {
-	return strings.Replace(s, "(-", "(0-", -1)
+	out := strings.Replace(s, "(-", "(0-", -1)
+	out = strings.Replace(s, "+-", "-", -1)
+	if out[0:1] == "-" {
+		out = "0" + out
+	}
+	return out
 }
 
 func replaceCurline(s string, i int) string {

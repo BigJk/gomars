@@ -46,8 +46,8 @@ func (m *MARS) PlaceWarrior(position int, w Warrior) {
 	m.Core.Warriors[len(m.Core.Warriors)-1].Task.Push(position + w.EntryPoint)
 }
 
-// ClearMars cleans the MARS
-func (m *MARS) ClearMars() {
+// Clear cleans the MARS
+func (m *MARS) Clear() {
 	m.warrior = make([]Warrior, 0)
 	for i := 0; i < m.Coresize; i++ {
 		m.Core.Memory[i] = Command{0, 0, 0, 0, 0, 0}
