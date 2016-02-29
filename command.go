@@ -78,3 +78,13 @@ func (c *Command) Equal(o *Command) bool {
 func (c *Command) Clone() Command {
 	return Command{c.OpCode, c.Modifier, c.AddressingModeA, c.A, c.AddressingModeB, c.B}
 }
+
+// Empty emptys the command
+func (c *Command) Empty() {
+	c.OpCode = 0
+	c.Modifier = 0
+	c.A = 0
+	c.B = 0
+	c.AddressingModeA = 0
+	c.AddressingModeB = 0
+}

@@ -11,6 +11,16 @@ type Warrior struct {
 	Code       []Command
 }
 
+// HasPSpace ...
+func (w *Warrior) HasPSpace() bool {
+	for i := 0; i < len(w.Code); i++ {
+		if w.Code[i].OpCode == stp || w.Code[i].OpCode == ldp {
+			return true
+		}
+	}
+	return false
+}
+
 // MARS is the simulator
 type MARS struct {
 	Coresize    int
@@ -37,6 +47,9 @@ func (m *MARS) AddWarriorString(wstr string) {
 // AddWarrior adds a new warrior into the MARS
 func (m *MARS) AddWarrior(w Warrior) {
 	m.warrior = append(m.warrior, w)
+	if w.HasPSpace() {
+		m.Core.DisablePSpace = false
+	}
 }
 
 // PlaceWarrior places a warrior in the core
@@ -57,16 +70,31 @@ func (m *MARS) Clear() {
 
 // Run executes the warrior in the core over multiple rounds
 func (m *MARS) Run(rounds int) map[int]int {
-	m.Core.PSpace = make([][]int, len(m.warrior))
-	for i := 0; i < len(m.warrior); i++ {
-		m.Core.PSpace[i] = make([]int, m.Core.SizePSpace)
-		m.Core.PSpace[i][0] = -1
+	/*
+
+		// FOR LATER PROFILING
+
+		f, err := os.Create("profile.cpu")
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+
+	*/
+
+	if !m.Core.DisablePSpace {
+		m.Core.PSpace = make([][]int, len(m.warrior))
+		for i := 0; i < len(m.warrior); i++ {
+			m.Core.PSpace[i] = make([]int, m.Core.SizePSpace)
+			m.Core.PSpace[i][0] = -1
+		}
 	}
 
 	w := make(map[int]int)
 	for i := 0; i < rounds; i++ {
 		for j := 0; j < m.Coresize; j++ {
-			m.Core.Memory[j] = Command{0, 0, 0, 0, 0, 0}
+			m.Core.Memory[j].Empty()
 		}
 
 		m.Core.Warriors = make([]CoreWarrior, 0)
@@ -84,11 +112,13 @@ func (m *MARS) Run(rounds int) map[int]int {
 		}
 
 		winner := m.RunSingle(i)
-		for i := 0; i < len(m.warrior); i++ {
-			if winner != i {
-				m.Core.PSpace[i][0] = 0
-			} else {
-				m.Core.PSpace[i][0] = m.Core.Alive()
+		if !m.Core.DisablePSpace {
+			for i := 0; i < len(m.warrior); i++ {
+				if winner != i {
+					m.Core.PSpace[i][0] = 0
+				} else {
+					m.Core.PSpace[i][0] = m.Core.Alive
+				}
 			}
 		}
 		w[winner]++
@@ -99,22 +129,23 @@ func (m *MARS) Run(rounds int) map[int]int {
 // RunSingle runs a singe round with a given offset to shift the starting warrior
 func (m *MARS) RunSingle(offset int) int {
 	wl := len(m.Core.Warriors)
+	m.Core.Alive = len(m.Core.Warriors)
 
 	for i := 0; i < m.MaxCycles; i++ {
-		if m.Core.Alive() <= 1 {
+		if m.Core.Alive <= 1 {
 			break
 		}
 		for j := 0; j < wl; j++ {
 			if m.Core.Warriors[(j+offset)%wl].Alive() {
 				m.Core.Execute(&m.Core.Warriors[(j+offset)%wl])
 			}
-			if m.Core.Alive() == 1 {
+			if m.Core.Alive == 1 {
 				break
 			}
 		}
 	}
 
-	if m.Core.Alive() == len(m.warrior) {
+	if m.Core.Alive == len(m.warrior) {
 		return -1
 	}
 

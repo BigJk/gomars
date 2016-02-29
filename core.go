@@ -6,11 +6,13 @@ var emptyCommand = Command{0, 0, 0, 0, 0, 0}
 
 // Core is the virtual memory that the MARS uses
 type Core struct {
-	Warriors   []CoreWarrior
-	Memory     []Command
-	PSpace     [][]int
-	Size       int
-	SizePSpace int
+	Warriors      []CoreWarrior
+	Memory        []Command
+	PSpace        [][]int
+	Size          int
+	SizePSpace    int
+	Alive         int
+	DisablePSpace bool
 }
 
 // CreateCore creates a new core
@@ -19,6 +21,7 @@ func CreateCore(size int) Core {
 	c.Memory = make([]Command, size)
 	c.Size = len(c.Memory)
 	c.SizePSpace = c.Size / 16
+	c.DisablePSpace = true
 	return c
 }
 
@@ -32,7 +35,7 @@ func (c *Core) Print(s, e int) {
 }
 
 // Alive counts how many warrior are still alive
-func (c *Core) Alive() int {
+/*func (c *Core) Alive() int {
 	a := 0
 	for i := 0; i < len(c.Warriors); i++ {
 		if c.Warriors[i].Alive() {
@@ -40,7 +43,7 @@ func (c *Core) Alive() int {
 		}
 	}
 	return a
-}
+}*/
 
 // IsEmpty checks if a part of the core is empty
 func (c *Core) IsEmpty(s, e int) bool {
@@ -109,6 +112,9 @@ func (c *Core) NormalizeAddress(address int) int {
 
 // NormalizePSpaceAddress folds the address around the pspace
 func (c *Core) NormalizePSpaceAddress(address int) int {
+	if c.DisablePSpace {
+		return 0
+	}
 	if address >= 0 && address < c.SizePSpace {
 		return address
 	}
@@ -172,6 +178,10 @@ func (c *Core) ExecuteCommand(w *CoreWarrior, address int) {
 		c.Memory[bpost].A++
 	} else if cmd.AddressingModeB == bIndirectPost {
 		c.Memory[bpost].B++
+	}
+
+	if w.Task.count == 0 {
+		c.Alive--
 	}
 
 }
