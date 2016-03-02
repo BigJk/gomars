@@ -45,10 +45,19 @@ func (c *Core) Print(s, e int) {
 	return a
 }*/
 
+// CreatePSpace creates the PSpace
+func (c *Core) CreatePSpace(count int) {
+	c.PSpace = make([][]int, count)
+	for i := 0; i < count; i++ {
+		c.PSpace[i] = make([]int, c.SizePSpace)
+		c.PSpace[i][0] = -1
+	}
+}
+
 // IsEmpty checks if a part of the core is empty
 func (c *Core) IsEmpty(s, e int) bool {
 	for i := 0; i < e; i++ {
-		if !c.Memory[s+i].Equal(&emptyCommand) {
+		if !c.Memory[s+i].IsEmpty() {
 			return false
 		}
 	}
@@ -56,8 +65,8 @@ func (c *Core) IsEmpty(s, e int) bool {
 }
 
 // PlaceWarrior places a warrior in the core
-func (c *Core) PlaceWarrior(position int, commands []Command) {
-	c.Warriors = append(c.Warriors, CoreWarrior{})
+func (c *Core) PlaceWarrior(num, position int, commands []Command) {
+	c.Warriors[num] = CoreWarrior{} //append(c.Warriors, CoreWarrior{})
 	for i := 0; i < len(commands); i++ {
 		c.Memory[position+i] = commands[i]
 	}
@@ -180,7 +189,7 @@ func (c *Core) ExecuteCommand(w *CoreWarrior, address int) {
 		c.Memory[bpost].B++
 	}
 
-	if w.Task.count == 0 {
+	if !w.Alive() {
 		c.Alive--
 	}
 

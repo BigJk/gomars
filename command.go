@@ -74,6 +74,11 @@ func (c *Command) Equal(o *Command) bool {
 	return c.OpCode == o.OpCode && c.Modifier == o.Modifier && c.AddressingModeA == o.AddressingModeA && c.A == o.A && c.AddressingModeB == o.AddressingModeB && c.B == o.B
 }
 
+// IsEmpty ...
+func (c *Command) IsEmpty() bool {
+	return (c.A == 0 && c.B == 0 && c.AddressingModeA == 0 && c.AddressingModeB == 0 && c.Modifier == 0 && c.OpCode == 0)
+}
+
 // Clone clones the command
 func (c *Command) Clone() Command {
 	return Command{c.OpCode, c.Modifier, c.AddressingModeA, c.A, c.AddressingModeB, c.B}

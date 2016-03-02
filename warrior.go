@@ -1,22 +1,17 @@
 package gomars
 
-// CoreWarrior represents a warrior in the core
-type CoreWarrior struct {
-	ID   int
-	Task *TaskQueue
+// Warrior ...
+type Warrior struct {
+	EntryPoint int
+	Code       []Command
 }
 
-// GetTask gets the next task
-func (w *CoreWarrior) GetTask() int {
-	return w.Task.Pop()
-}
-
-// QueueTask queues the next task
-func (w *CoreWarrior) QueueTask(address int) {
-	w.Task.Push(address)
-}
-
-// Alive checks if the warrior is still alive
-func (w *CoreWarrior) Alive() bool {
-	return w.Task.count != 0
+// HasPSpace ...
+func (w *Warrior) HasPSpace() bool {
+	for i := 0; i < len(w.Code); i++ {
+		if w.Code[i].OpCode == stp || w.Code[i].OpCode == ldp {
+			return true
+		}
+	}
+	return false
 }

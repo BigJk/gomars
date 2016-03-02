@@ -1,6 +1,7 @@
 package gomars
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 	"sort"
@@ -29,13 +30,14 @@ var isFormular = regexp.MustCompile("[0-9][+\\-*\\/%]+[0-9]")
 var field = regexp.MustCompile("^([*#{}$<>@])(.*)")
 var addressingModes = regexp.MustCompile("([a-z]{3}) ([*#{}$<>@]).*, ([*#{}$<>@])")
 var isNoNumber = regexp.MustCompile("[a-zA-Z]+")
+var singleLine = regexp.MustCompile("([a-z]+)\\.?([a-z]+)?[ ]*(.)[ ]*([-0-9]+)[ ]*,[ ]*(.)[ ]*([-0-9]+)")
 
 var opcodes = []string{"dat", "mov", "add", "sub", "mul", "div", "mod", "jmp", "jmz", "jmn", "djn", "spl", "seq", "sne", "cmp", "slt", "nop", "ldp", "stp"}
 var modifier = []string{"*", "#", "{", "}", "$", ">", "<", "@"}
 var env = eval.NewEnvironment()
 
-// ParseToLoadFile ...
-func (m *MARS) ParseToLoadFile(warrior string) string {
+// ParseWarrior ...
+func (m *MARS) ParseWarrior(warrior string) Warrior {
 	predefined := make(map[string]int)
 	predefined["CORESIZE"] = m.Coresize
 	predefined["PSPACESIZE"] = len(m.Core.PSpace)
@@ -124,7 +126,7 @@ func (m *MARS) ParseToLoadFile(warrior string) string {
 
 	}
 
-	compiledWarrior := ""
+	compiledWarrior := Warrior{}
 
 	var labelKeys []string
 	var equKeys []string
@@ -139,6 +141,8 @@ func (m *MARS) ParseToLoadFile(warrior string) string {
 
 	sort.Sort(stringSorter(equKeys))
 	sort.Sort(stringSorter(labelKeys))
+
+	compiledWarrior.Code = make([]Command, len(compiledWarriorLines))
 
 	for i := 0; i < len(compiledWarriorLines); i++ {
 
@@ -158,21 +162,22 @@ func (m *MARS) ParseToLoadFile(warrior string) string {
 			}
 		}
 
-		newLine := ""
+		var newLine bytes.Buffer
 
 		if len(split) >= 3 {
-			newLine += split[0] + " " + padRight(compileField(split[1])) + ", " + compileField(split[2]) + "\n"
+			newLine.WriteString(split[0])
+			newLine.WriteString(" ")
+			newLine.WriteString(compileField(split[1]))
+			newLine.WriteString(", ")
+			newLine.WriteString(compileField(split[2]))
 		} else {
-			newLine += split[0] + " " + padRight(compileField(split[1])) + ", $0 \n"
+			newLine.WriteString(split[0])
+			newLine.WriteString(" ")
+			newLine.WriteString(compileField(split[1]))
+			newLine.WriteString(", $0")
 		}
 
-		if !strings.Contains(split[0], ".") {
-			f := addressingModes.FindStringSubmatch(newLine)
-
-			newLine = strings.Replace(newLine, f[1], f[1]+"."+opcodeStandard(f[1], f[2], f[3]), -1)
-		}
-
-		compiledWarrior += newLine
+		compiledWarrior.Code[i], _ = ParseLine(newLine.String())
 
 	}
 
@@ -192,7 +197,9 @@ func (m *MARS) ParseToLoadFile(warrior string) string {
 		org = "0"
 	}
 
-	return "ORG " + org + "\nPIN 0\n" + strings.ToUpper(compiledWarrior)
+	compiledWarrior.EntryPoint, _ = strconv.Atoi(org)
+
+	return compiledWarrior
 }
 
 func inserPredefined(s string, predefined map[string]int) string {
@@ -278,30 +285,77 @@ func isFor(s string) bool {
 	return strings.ToLower(s) == "for"
 }
 
-func opcodeStandard(s string, a string, b string) string {
-	o := strings.ToLower(s)
-
+func opcodeStandard(o string, aAddr string, bAddr string) Modifier {
 	if o == "dat" {
-		return "f"
+		return f
 	}
 
-	if (o == "mov" || o == "cmp") && a == "#" || (o == "add" || o == "sub" || o == "mul" || o == "div" || o == "mod" || o == "slt") && a == "#" {
-		return "ab"
-	} else if (o == "mov" || o == "cmp") && b == "#" || (o == "add" || o == "sub" || o == "mul" || o == "div" || o == "mod") && a == "#" {
-		return "b"
+	if (o == "mov" || o == "cmp") && aAddr == "#" || (o == "add" || o == "sub" || o == "mul" || o == "div" || o == "mod" || o == "slt") && aAddr == "#" {
+		return ab
+	} else if (o == "mov" || o == "cmp") && bAddr == "#" || (o == "add" || o == "sub" || o == "mul" || o == "div" || o == "mod") && aAddr == "#" {
+		return b
 	} else if o == "mov" || o == "cmp" {
-		return "i"
+		return i
 	} else if o == "add" || o == "sub" || o == "mul" || o == "div" || o == "mod" {
-		return "f"
+		return f
 	}
 
-	return "b"
+	return b
 }
 
-func padRight(s string) string {
-	out := s
-	for i := 0; i < 10-len(s); i++ {
-		out += " "
+// ParseLine ...
+func ParseLine(s string) (Command, bool) {
+	m := singleLine.FindAllStringSubmatch(strings.ToLower(s), 1)[0]
+	if len(m) != 7 && len(m) != 6 {
+		return emptyCommand, false
 	}
-	return out
+	a, _ := strconv.Atoi(m[4])
+	b, _ := strconv.Atoi(m[6])
+	if m[2] != "" {
+		return Command{ParseOpCode(m[1]), ParseModifier(m[2]), ParseAddressingMode(m[3]), a, ParseAddressingMode(m[5]), b}, true
+	}
+	return Command{ParseOpCode(m[1]), opcodeStandard(m[1], m[3], m[5]), ParseAddressingMode(m[3]), a, ParseAddressingMode(m[5]), b}, true
+}
+
+// ParseOpCode ...
+func ParseOpCode(s string) OpCode {
+	for i := 0; i < int(nop+1); i++ {
+		if OpCode(i).String() == s {
+			return OpCode(i)
+		}
+	}
+	return 0
+}
+
+// ParseModifier ...
+func ParseModifier(s string) Modifier {
+	for i := 0; i < int(i+1); i++ {
+		if Modifier(i).String() == s {
+			return Modifier(i)
+		}
+	}
+	return 0
+}
+
+// ParseAddressingMode ...
+func ParseAddressingMode(s string) AddressingMode {
+	switch s {
+	case "#":
+		return immediate
+	case "$":
+		return direct
+	case "*":
+		return aIndirect
+	case "@":
+		return bIndirect
+	case "{":
+		return aIndirectPre
+	case "<":
+		return bIndirectPre
+	case "}":
+		return aIndirectPost
+	case ">":
+		return bIndirectPost
+	}
+	return 0
 }
