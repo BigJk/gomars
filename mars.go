@@ -88,7 +88,7 @@ func (m *MARS) Run(rounds int) []int {
 
 		winner := m.RunSingle(i)
 		if !m.Core.DisablePSpace {
-			for j := 0; j < wc; i++ {
+			for j := 0; j < wc; j++ {
 				if winner != j {
 					m.Core.PSpace[j][0] = 0
 				} else {
