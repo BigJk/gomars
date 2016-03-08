@@ -69,6 +69,11 @@ func (c *Command) Print() {
 	fmt.Println(c.OpCode.String(), c.Modifier.String(), c.AddressingModeA.String(), c.A, c.AddressingModeB.String(), c.B)
 }
 
+// ToString ...
+func (c *Command) ToString() string {
+	return c.OpCode.String() + "." + c.Modifier.String() + " " + c.AddressingModeA.String() + fmt.Sprint(c.A) + ", " + c.AddressingModeB.String() + fmt.Sprint(c.B)
+}
+
 // Equal checks if two commands are equal
 func (c *Command) Equal(o *Command) bool {
 	return c.OpCode == o.OpCode && c.Modifier == o.Modifier && c.AddressingModeA == o.AddressingModeA && c.A == o.A && c.AddressingModeB == o.AddressingModeB && c.B == o.B
