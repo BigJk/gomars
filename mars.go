@@ -13,8 +13,8 @@ type MARS struct {
 	MaxLength    int
 	MinDistance  int
 	Core         Core
-	warrior      []Warrior
-	warriorCount int
+	Warrior      []Warrior
+	WarriorCount int
 }
 
 // CreateMars creates a new MARS
@@ -31,7 +31,7 @@ func (m *MARS) AddWarriorString(wstr string) {
 
 // AddWarrior adds a new warrior into the MARS
 func (m *MARS) AddWarrior(w Warrior) {
-	m.warrior = append(m.warrior, w)
+	m.Warrior = append(m.Warrior, w)
 	if w.HasPSpace() {
 		m.Core.DisablePSpace = false
 	}
@@ -55,7 +55,7 @@ func (m *MARS) PlaceRandom(num int, w Warrior) {
 
 // Clear cleans the MARS
 func (m *MARS) Clear() {
-	m.warrior = make([]Warrior, 0)
+	m.Warrior = make([]Warrior, 0)
 	for i := 0; i < m.Coresize; i++ {
 		m.Core.Memory[i] = Command{0, 0, 0, 0, 0, 0}
 	}
@@ -64,8 +64,8 @@ func (m *MARS) Clear() {
 
 // Run executes the warrior in the core over multiple rounds
 func (m *MARS) Run(rounds int) []int {
-	m.warriorCount = len(m.warrior)
-	wc := m.warriorCount
+	m.WarriorCount = len(m.Warrior)
+	wc := m.WarriorCount
 
 	if !m.Core.DisablePSpace {
 		m.Core.CreatePSpace(wc)
@@ -78,11 +78,11 @@ func (m *MARS) Run(rounds int) []int {
 			m.Core.Memory[j].Empty()
 		}
 
-		m.PlaceWarrior(0, 0, m.warrior[0])
+		m.PlaceWarrior(0, 0, m.Warrior[0])
 		m.Core.Warriors[0].ID = 0
 
 		for j := 1; j < wc; j++ {
-			m.PlaceRandom(j, m.warrior[j])
+			m.PlaceRandom(j, m.Warrior[j])
 			m.Core.Warriors[j].ID = j
 		}
 
@@ -103,7 +103,7 @@ func (m *MARS) Run(rounds int) []int {
 
 // RunSingle runs a singe round with a given offset to shift the starting warrior
 func (m *MARS) RunSingle(offset int) int {
-	wc := m.warriorCount
+	wc := m.WarriorCount
 	m.Core.Alive = wc
 
 	for i := 0; i < m.MaxCycles; i++ {

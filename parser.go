@@ -3,6 +3,7 @@ package gomars
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"regexp"
 	"sort"
 	"strconv"
@@ -27,10 +28,11 @@ var comma = regexp.MustCompile("[ ]*,[ ]*")
 var comments = regexp.MustCompile(";.*\n")
 var emptySpace = regexp.MustCompile("[ 	]+")
 var isFormular = regexp.MustCompile("[0-9][+\\-*\\/%]+[0-9]")
-var field = regexp.MustCompile("^([*#{}$<>@])(.*)")
+var field = regexp.MustCompile("^([*#{}$<>@])?(.*)")
 var addressingModes = regexp.MustCompile("([a-z]{3}) ([*#{}$<>@]).*, ([*#{}$<>@])")
 var isNoNumber = regexp.MustCompile("[a-zA-Z]+")
 var singleLine = regexp.MustCompile("([a-z]+)\\.?([a-z]+)?[ ]*(.)[ ]*([-0-9]+)[ ]*,[ ]*(.)[ ]*([-0-9]+)")
+var surround = regexp.MustCompile("\\((-?[0-9]+)\\)")
 
 var opcodes = []string{"dat", "mov", "add", "sub", "mul", "div", "mod", "jmp", "jmz", "jmn", "djn", "spl", "seq", "sne", "cmp", "slt", "nop", "ldp", "stp"}
 var modifier = []string{"*", "#", "{", "}", "$", ">", "<", "@"}
@@ -43,7 +45,7 @@ func (m *MARS) ParseWarrior(warrior string) Warrior {
 	predefined["PSPACESIZE"] = len(m.Core.PSpace)
 	predefined["MAXCYCLES"] = m.MaxCycles
 	predefined["MAXPROCESSES"] = m.MaxProcess
-	predefined["WARRIORS"] = len(m.warrior) // TODO: FIX!
+	predefined["WARRIORS"] = len(m.Warrior) // TODO: FIX!
 	predefined["MAXLENGTH"] = m.MaxLength
 	predefined["MINDISTANCE"] = m.MinDistance
 
@@ -167,13 +169,13 @@ func (m *MARS) ParseWarrior(warrior string) Warrior {
 		if len(split) >= 3 {
 			newLine.WriteString(split[0])
 			newLine.WriteString(" ")
-			newLine.WriteString(compileField(split[1]))
+			newLine.WriteString(compileField(split[1], curline))
 			newLine.WriteString(", ")
-			newLine.WriteString(compileField(split[2]))
+			newLine.WriteString(compileField(split[2], curline))
 		} else {
 			newLine.WriteString(split[0])
 			newLine.WriteString(" ")
-			newLine.WriteString(compileField(split[1]))
+			newLine.WriteString(compileField(split[1], curline))
 			newLine.WriteString(", $0")
 		}
 
@@ -255,6 +257,14 @@ func isOpcode(s string) bool {
 func fixForumlar(s string) string {
 	out := strings.Replace(s, "(-", "(0-", -1)
 	out = strings.Replace(s, "+-", "-", -1)
+	m := surround.FindAllStringSubmatch(out, -1)
+	for i := 0; i < len(m); i++ {
+		if m[i][1][0] != '-' {
+			out = strings.Replace(out, m[i][0], m[i][1], -1)
+		} else {
+			out = strings.Replace(out, m[i][0], "(0"+m[i][1]+")", -1)
+		}
+	}
 	if out[0:1] == "-" {
 		out = "0" + out
 	}
@@ -265,20 +275,21 @@ func replaceCurline(s string, i int) string {
 	return strings.Replace(s, "CURLINE", strconv.Itoa(i), -1)
 }
 
-func compileField(s string) string {
-	f := field.FindStringSubmatch(s)
+func compileField(s string, i int) string {
+	f := field.FindStringSubmatch(strings.Replace(strings.ToLower(s), "curline", fmt.Sprint(i), -1))
+	//fmt.Println(s, f)
 	if len(f) == 0 {
 		if len(isFormular.FindAllString(s, -1)) == 0 {
 			return "$" + s
 		}
 		v, _ := env.Eval(fixForumlar(s))
-		return "$" + fmt.Sprint(v)
+		return "$" + fmt.Sprint(math.Ceil(v))
 	}
 	if len(isFormular.FindAllString(s, -1)) == 0 {
 		return s
 	}
 	v, _ := env.Eval(fixForumlar(f[2]))
-	return f[1] + fmt.Sprint(v)
+	return f[1] + fmt.Sprint(math.Ceil(v))
 }
 
 func isFor(s string) bool {
@@ -305,7 +316,7 @@ func opcodeStandard(o string, aAddr string, bAddr string) Modifier {
 
 // ParseLine ...
 func ParseLine(s string) (Command, bool) {
-	m := singleLine.FindAllStringSubmatch(strings.ToLower(s), 1)[0]
+	m := singleLine.FindStringSubmatch(strings.ToLower(s))
 	if len(m) != 7 && len(m) != 6 {
 		return emptyCommand, false
 	}
