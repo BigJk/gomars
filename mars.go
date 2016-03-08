@@ -59,7 +59,7 @@ func (m *MARS) Clear() {
 	for i := 0; i < m.Coresize; i++ {
 		m.Core.Memory[i] = Command{0, 0, 0, 0, 0, 0}
 	}
-	m.Core.Warriors = make([]CoreWarrior, 0)
+	m.Core.Warriors = make([]*CoreWarrior, 0)
 }
 
 // Run executes the warrior in the core over multiple rounds
@@ -71,7 +71,7 @@ func (m *MARS) Run(rounds int) []int {
 		m.Core.CreatePSpace(wc)
 	}
 
-	m.Core.Warriors = make([]CoreWarrior, wc)
+	m.Core.Warriors = make([]*CoreWarrior, wc)
 	w := make([]int, wc+1)
 	for i := 0; i < rounds; i++ {
 		for j := 0; j < m.Coresize; j++ {
@@ -111,7 +111,7 @@ func (m *MARS) RunSingle(offset int) int {
 			break
 		}
 		for j := 0; j < wc; j++ {
-			m.Core.Execute(&m.Core.Warriors[(j+offset)%wc])
+			m.Core.Execute(m.Core.Warriors[(j+offset)%wc])
 			if m.Core.Alive == 1 {
 				break
 			}

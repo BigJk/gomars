@@ -6,7 +6,7 @@ var emptyCommand = Command{0, 0, 0, 0, 0, 0}
 
 // Core is the virtual memory that the MARS uses
 type Core struct {
-	Warriors      []CoreWarrior
+	Warriors      []*CoreWarrior
 	Memory        []Command
 	PSpace        [][]int
 	Size          int
@@ -34,17 +34,6 @@ func (c *Core) Print(s, e int) {
 	fmt.Println("=====================")
 }
 
-// Alive counts how many warrior are still alive
-/*func (c *Core) Alive() int {
-	a := 0
-	for i := 0; i < len(c.Warriors); i++ {
-		if c.Warriors[i].Alive() {
-			a++
-		}
-	}
-	return a
-}*/
-
 // CreatePSpace creates the PSpace
 func (c *Core) CreatePSpace(count int) {
 	c.PSpace = make([][]int, count)
@@ -66,7 +55,7 @@ func (c *Core) IsEmpty(s, e int) bool {
 
 // PlaceWarrior places a warrior in the core
 func (c *Core) PlaceWarrior(num, position int, commands []Command) {
-	c.Warriors[num] = CoreWarrior{} //append(c.Warriors, CoreWarrior{})
+	c.Warriors[num] = &CoreWarrior{}
 	for i := 0; i < len(commands); i++ {
 		c.Memory[position+i] = commands[i]
 	}
@@ -102,8 +91,9 @@ func (c *Core) GetAddress(position, value int, addressingMode AddressingMode) (i
 
 // GetAddresses gets both addresses of the a and b field and also returns their addresses for postincrement
 func (c *Core) GetAddresses(position int) (int, int, int, int) {
-	a, apost := c.GetAddress(position, c.Memory[position].A, c.Memory[position].AddressingModeA)
-	b, bpost := c.GetAddress(position, c.Memory[position].B, c.Memory[position].AddressingModeB)
+	cmd := &c.Memory[position]
+	a, apost := c.GetAddress(position, cmd.A, cmd.AddressingModeA)
+	b, bpost := c.GetAddress(position, cmd.B, cmd.AddressingModeB)
 	return a, b, apost, bpost
 }
 
@@ -137,7 +127,7 @@ func (c *Core) NormalizePSpaceAddress(address int) int {
 // ExecuteCommand executes a single command at the given address
 func (c *Core) ExecuteCommand(w *CoreWarrior, address int) {
 	a, b, apost, bpost := c.GetAddresses(address)
-	cmd := c.Memory[address]
+	cmd := &c.Memory[address]
 
 	switch cmd.OpCode {
 	case dat:
