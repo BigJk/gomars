@@ -235,16 +235,6 @@ func normalizeCode(s string) string {
 	return stripEmptyLines(out)
 }
 
-func normalizeLine(s string) string {
-	out := s
-	for i := 0; i < len(arithOps); i++ {
-		out = strings.Replace(out, " "+arithOps[i], arithOps[i], -1)
-		out = strings.Replace(out, arithOps[i]+" ", arithOps[i], -1)
-		out = strings.Replace(out, " "+arithOps[i]+" ", arithOps[i], -1)
-	}
-	return out
-}
-
 func stripEmptyLines(s string) string {
 	split := strings.Split(s, "\n")
 	out := ""
@@ -326,7 +316,7 @@ func opcodeStandard(o string, aAddr string, bAddr string) Modifier {
 		return b
 	} else if o == "mov" || o == "cmp" || o == "sne" || o == "seq" {
 		return i
-	} else if o == "add" || o == "sub" || o == "mul" || o == "div" || o == "mod" {
+	} else if o == "add" || o == "sub" || o == "mul" || o == "div" || o == "mod" || o == "nop" {
 		return f
 	}
 

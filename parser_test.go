@@ -12,7 +12,8 @@ var testWarrior = [][]string{
 	[]string{"3.red", "3.rc"},
 	[]string{"4.red", "4.rc"},
 	[]string{"5.red", "5.rc"},
-	[]string{"6.red", "6.rc"}}
+	[]string{"6.red", "6.rc"},
+	[]string{"7.red", "7.rc"}}
 
 func TestParser(t *testing.T) {
 	m := CreateMars(800, 800, 8000, 20, 20)
