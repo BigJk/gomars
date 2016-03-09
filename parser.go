@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sanderhahn/goexpr/eval"
+	"github.com/BigJk/goexpr/eval"
 )
 
 type stringSorter []string
