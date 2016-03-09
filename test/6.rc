@@ -1,0 +1,23 @@
+;redcode
+;name Switch'em
+;length 18
+      ORG 6
+      PIN 0
+      DAT.F  $0        , $0       
+      DAT.F  $0        , $0       
+      MOV.I  >6        , {-6      
+      MOV.I  >12       , $-11     
+      ADD.F  $-2       , $-1      
+      JMP.B  $-2       , $-3      
+      LDP.B  }-6       , $-6      
+      LDP.AB $-7       , @-7      
+      STP.A  @-8       , <-7      
+      JMZ.B  $-7       , @-8      
+      MOV.AB #8        , #8       
+      ADD.A  #2343     , $5       
+      MOV.I  <-2       , {4       
+      MOV.I  $4        , {4412    
+      JMN.B  $-2       , $-4      
+      SPL.B  $-5       , {4212    
+      JMZ.B  $5223     , *0       
+      DAT.F  }1        , >1       

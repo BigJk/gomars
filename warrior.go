@@ -23,9 +23,14 @@ func (w *Warrior) HasPSpace() bool {
 
 // SaveLoadFile ...
 func (w *Warrior) SaveLoadFile(path string) {
-	out := "PIN 0\nORG " + fmt.Sprint(w.EntryPoint)
+	ioutil.WriteFile(path, []byte(w.LoadFile()), 0777)
+}
+
+// LoadFile ...
+func (w *Warrior) LoadFile() string {
+	out := "ORG " + fmt.Sprint(w.EntryPoint) + "\nPIN 0"
 	for i := 0; i < len(w.Code); i++ {
 		out += "\n" + w.Code[i].ToString()
 	}
-	ioutil.WriteFile(path, []byte(out), 0777)
+	return out
 }

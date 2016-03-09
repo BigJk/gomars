@@ -1,0 +1,10 @@
+;redcode
+;name naosv2
+;length 5
+      ORG 1
+      PIN 0
+      ADD.AB #-66      , $2       
+      JMZ.F  $-1       , >1       
+      MOV.I  >-104     , $-132    
+      SPL.B  $-1       , <-1      
+      MOV.I  #1        , $1       

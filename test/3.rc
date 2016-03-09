@@ -1,0 +1,25 @@
+;redcode
+;name U-Lat II
+;length 20
+      ORG 0
+      PIN 0
+      SPL.B  $1        , >4123    
+      SPL.B  $1        , >4345    
+      MOV.I  $-1       , $0       
+      SPL.B  $10       , >4567    
+      SPL.B  @0        , }2345    
+      MOV.I  }-1       , >-1      
+      SPL.B  @0        , }3456    
+      MOV.I  }-1       , >-1      
+      MOV.I  {-123     , {-234    
+      MOV.I  {-3       , <1       
+      JMP.B  @0        , >3901    
+      DAT.F  $1        , $1       
+      DAT.F  $1        , $1       
+      SPL.B  @0        , }3456    
+      MOV.I  }-1       , >-1      
+      MOV.I  }234      , }345     
+      SPL.B  $3        , <5100    
+      SPL.B  $2668     , <5345    
+      MOV.I  $0        , $2667    
+      JMP.B  $-2667    , <5567    

@@ -21,7 +21,10 @@ func (s stringSorter) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 func (s stringSorter) Less(i, j int) bool {
-	return len(s[i]) > len(s[j])
+	if len(s[i]) != len(s[j]) {
+		return len(s[i]) > len(s[j])
+	}
+	return s[i][0] < s[j][0]
 }
 
 var comma = regexp.MustCompile("[ ]*,[ ]*")
@@ -31,11 +34,12 @@ var isFormular = regexp.MustCompile("[0-9][+\\-*\\/%]+[0-9]")
 var field = regexp.MustCompile("^([*#{}$<>@])?(.*)")
 var addressingModes = regexp.MustCompile("([a-z]{3}) ([*#{}$<>@]).*, ([*#{}$<>@])")
 var isNoNumber = regexp.MustCompile("[a-zA-Z]+")
-var singleLine = regexp.MustCompile("([a-z]+)\\.?([a-z]+)?[ ]*(.)[ ]*([-0-9]+)[ ]*,[ ]*(.)[ ]*([-0-9]+)")
+var singleLine = regexp.MustCompile("[ ]*([a-z]+)\\.?([a-z]+)?[ ]*(.)[ ]*([-0-9]+)[ ]*,[ ]*(.)[ ]*([-0-9]+)")
 var surround = regexp.MustCompile("\\((-?[0-9]+)\\)")
 
 var opcodes = []string{"dat", "mov", "add", "sub", "mul", "div", "mod", "jmp", "jmz", "jmn", "djn", "spl", "seq", "sne", "cmp", "slt", "nop", "ldp", "stp"}
 var modifier = []string{"*", "#", "{", "}", "$", ">", "<", "@"}
+var arithOps = []string{"+", "-", "*", "/", "%"}
 var env = eval.NewEnvironment()
 
 // ParseWarrior ...
@@ -66,7 +70,7 @@ func (m *MARS) ParseWarrior(warrior string) Warrior {
 
 	for i := 0; i < len(warriorLines); i++ {
 		if inFor {
-			if strings.ToLower(warriorLines[i]) == "rof" {
+			if strings.HasPrefix(warriorLines[i], "rof") {
 				inFor = false
 			}
 			continue
@@ -100,7 +104,7 @@ func (m *MARS) ParseWarrior(warrior string) Warrior {
 				c, _ := env.Eval(replaceCurline(split[1], curline))
 				inline := 0
 				for {
-					if strings.ToLower(warriorLines[i+inline]) == "rof" {
+					if strings.HasPrefix(warriorLines[i+inline], "rof") {
 						break
 					}
 					inline++
@@ -113,7 +117,7 @@ func (m *MARS) ParseWarrior(warrior string) Warrior {
 				}
 				inFor = true
 			} else if split[1] == "equ" {
-				equs[split[0]] = split[2]
+				equs[split[0]] = strings.Join(split[2:], " ")
 			} else {
 				if isOpcode(split[1]) {
 					labels[split[0]] = curline
@@ -130,37 +134,58 @@ func (m *MARS) ParseWarrior(warrior string) Warrior {
 
 	compiledWarrior := Warrior{}
 
-	var labelKeys []string
-	var equKeys []string
-
+	var keys []string
 	for key := range equs {
-		equKeys = append(equKeys, key)
+		keys = append(keys, key)
 	}
-
 	for key := range labels {
-		labelKeys = append(labelKeys, key)
+		keys = append(keys, key)
 	}
-
-	sort.Sort(stringSorter(equKeys))
-	sort.Sort(stringSorter(labelKeys))
+	sort.Sort(stringSorter(keys))
 
 	compiledWarrior.Code = make([]Command, len(compiledWarriorLines))
 
 	for i := 0; i < len(compiledWarriorLines); i++ {
 
-		split := strings.Split(compiledWarriorLines[i], " ")
+		split := strings.SplitN(compiledWarriorLines[i], " ", 3)
 
-		for j := 0; j < len(equKeys); j++ {
-			split[1] = strings.Replace(split[1], equKeys[j], equs[equKeys[j]], -1)
-			if len(split) >= 3 {
-				split[2] = strings.Replace(split[2], equKeys[j], equs[equKeys[j]], -1)
+		split[1] = strings.Replace(split[1], " ", "", -1)
+		split[2] = strings.Replace(split[2], " ", "", -1)
+
+		found := true
+
+		for found {
+			found = false
+			for j := 0; j < len(keys); j++ {
+				if strings.Contains(split[1], keys[j]) || strings.Contains(split[2], keys[j]) {
+					found = true
+				}
+				if val, ok := equs[keys[j]]; ok {
+					split[1] = strings.Replace(split[1], keys[j], val, -1)
+					split[2] = strings.Replace(split[2], keys[j], val, -1)
+				}
+				if val, ok := labels[keys[j]]; ok {
+					split[1] = strings.Replace(split[1], keys[j], fmt.Sprint(val-i), -1)
+					split[2] = strings.Replace(split[2], keys[j], fmt.Sprint(val-i), -1)
+				}
 			}
 		}
 
-		for j := 0; j < len(labelKeys); j++ {
-			split[1] = strings.Replace(split[1], labelKeys[j], fmt.Sprint(labels[labelKeys[j]]-i), -1)
-			if len(split) >= 3 {
-				split[2] = strings.Replace(split[2], labelKeys[j], fmt.Sprint(labels[labelKeys[j]]-i), -1)
+		for j := 0; j < len(keys); j++ {
+			if val, ok := labels[keys[j]]; ok {
+				split[1] = strings.Replace(split[1], keys[j], fmt.Sprint(val-i), -1)
+				if len(split) >= 3 {
+					split[2] = strings.Replace(split[2], keys[j], fmt.Sprint(val-i), -1)
+				}
+			}
+		}
+
+		for j := 0; j < len(keys); j++ {
+			if val, ok := equs[keys[j]]; ok {
+				split[1] = strings.Replace(split[1], keys[j], val, -1)
+				if len(split) >= 3 {
+					split[2] = strings.Replace(split[2], keys[j], val, -1)
+				}
 			}
 		}
 
@@ -189,8 +214,10 @@ func (m *MARS) ParseWarrior(warrior string) Warrior {
 
 	if org != "" {
 		if isNoNumber.MatchString(org) {
-			for j := 0; j < len(labelKeys); j++ {
-				org = strings.Replace(org, labelKeys[j], fmt.Sprint(labels[labelKeys[j]]), -1)
+			for j := 0; j < len(keys); j++ {
+				if val, ok := labels[keys[j]]; ok {
+					org = strings.Replace(org, keys[j], fmt.Sprint(val), -1)
+				}
 			}
 			v, _ := env.Eval(org)
 			org = fmt.Sprint(v)
@@ -226,6 +253,16 @@ func normalizeCode(s string) string {
 	return stripEmptyLines(out)
 }
 
+func normalizeLine(s string) string {
+	out := s
+	for i := 0; i < len(arithOps); i++ {
+		out = strings.Replace(out, " "+arithOps[i], arithOps[i], -1)
+		out = strings.Replace(out, arithOps[i]+" ", arithOps[i], -1)
+		out = strings.Replace(out, " "+arithOps[i]+" ", arithOps[i], -1)
+	}
+	return out
+}
+
 func stripEmptyLines(s string) string {
 	split := strings.Split(s, "\n")
 	out := ""
@@ -255,8 +292,9 @@ func isOpcode(s string) bool {
 }
 
 func fixForumlar(s string) string {
-	out := strings.Replace(s, "(-", "(0-", -1)
-	out = strings.Replace(s, "+-", "-", -1)
+	out := strings.Replace(s, " ", "", -1)
+	out = strings.Replace(out, "(-", "(0-", -1)
+	out = strings.Replace(out, "+-", "-", -1)
 	m := surround.FindAllStringSubmatch(out, -1)
 	for i := 0; i < len(m); i++ {
 		if m[i][1][0] != '-' {
@@ -277,19 +315,18 @@ func replaceCurline(s string, i int) string {
 
 func compileField(s string, i int) string {
 	f := field.FindStringSubmatch(strings.Replace(strings.ToLower(s), "curline", fmt.Sprint(i), -1))
-	//fmt.Println(s, f)
-	if len(f) == 0 {
-		if len(isFormular.FindAllString(s, -1)) == 0 {
+	if f[1] == "" {
+		if len(isFormular.FindAllString(fixForumlar(s), -1)) == 0 {
 			return "$" + s
 		}
 		v, _ := env.Eval(fixForumlar(s))
-		return "$" + fmt.Sprint(math.Ceil(v))
+		return "$" + fmt.Sprintf("%.0f", math.Floor(v))
 	}
-	if len(isFormular.FindAllString(s, -1)) == 0 {
+	if len(isFormular.FindAllString(fixForumlar(s), -1)) == 0 {
 		return s
 	}
 	v, _ := env.Eval(fixForumlar(f[2]))
-	return f[1] + fmt.Sprint(math.Ceil(v))
+	return f[1] + fmt.Sprintf("%.0f", math.Floor(v))
 }
 
 func isFor(s string) bool {
@@ -305,7 +342,7 @@ func opcodeStandard(o string, aAddr string, bAddr string) Modifier {
 		return ab
 	} else if (o == "mov" || o == "cmp") && bAddr == "#" || (o == "add" || o == "sub" || o == "mul" || o == "div" || o == "mod") && aAddr == "#" {
 		return b
-	} else if o == "mov" || o == "cmp" {
+	} else if o == "mov" || o == "cmp" || o == "sne" || o == "seq" {
 		return i
 	} else if o == "add" || o == "sub" || o == "mul" || o == "div" || o == "mod" {
 		return f
