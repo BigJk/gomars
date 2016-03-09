@@ -3,6 +3,7 @@ package gomars
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"math"
 	"regexp"
 	"sort"
@@ -41,6 +42,12 @@ var opcodes = []string{"dat", "mov", "add", "sub", "mul", "div", "mod", "jmp", "
 var modifier = []string{"*", "#", "{", "}", "$", ">", "<", "@"}
 var arithOps = []string{"+", "-", "*", "/", "%"}
 var env = eval.NewEnvironment()
+
+// ParseWarriorFromFile ...
+func (m *MARS) ParseWarriorFromFile(path string) Warrior {
+	w, _ := ioutil.ReadFile(path)
+	return m.ParseWarrior(string(w))
+}
 
 // ParseWarrior ...
 func (m *MARS) ParseWarrior(warrior string) Warrior {
@@ -186,7 +193,7 @@ func (m *MARS) ParseWarrior(warrior string) Warrior {
 			newLine.WriteString(", $0")
 		}
 
-		compiledWarrior.Code[i], _ = ParseLine(newLine.String())
+		compiledWarrior.Code[i], _ = parseLine(newLine.String())
 
 	}
 
@@ -326,8 +333,7 @@ func opcodeStandard(o string, aAddr string, bAddr string) Modifier {
 	return b
 }
 
-// ParseLine ...
-func ParseLine(s string) (Command, bool) {
+func parseLine(s string) (Command, bool) {
 	m := singleLine.FindStringSubmatch(strings.ToLower(s))
 	if len(m) != 7 && len(m) != 6 {
 		return emptyCommand, false
@@ -335,13 +341,12 @@ func ParseLine(s string) (Command, bool) {
 	a, _ := strconv.Atoi(m[4])
 	b, _ := strconv.Atoi(m[6])
 	if m[2] != "" {
-		return Command{ParseOpCode(m[1]), ParseModifier(m[2]), ParseAddressingMode(m[3]), a, ParseAddressingMode(m[5]), b}, true
+		return Command{parseOpCode(m[1]), parseModifier(m[2]), parseAddressingMode(m[3]), a, parseAddressingMode(m[5]), b}, true
 	}
-	return Command{ParseOpCode(m[1]), opcodeStandard(m[1], m[3], m[5]), ParseAddressingMode(m[3]), a, ParseAddressingMode(m[5]), b}, true
+	return Command{parseOpCode(m[1]), opcodeStandard(m[1], m[3], m[5]), parseAddressingMode(m[3]), a, parseAddressingMode(m[5]), b}, true
 }
 
-// ParseOpCode ...
-func ParseOpCode(s string) OpCode {
+func parseOpCode(s string) OpCode {
 	for i := 0; i < int(nop+1); i++ {
 		if OpCode(i).String() == s {
 			return OpCode(i)
@@ -350,8 +355,7 @@ func ParseOpCode(s string) OpCode {
 	return 0
 }
 
-// ParseModifier ...
-func ParseModifier(s string) Modifier {
+func parseModifier(s string) Modifier {
 	for i := 0; i < int(i+1); i++ {
 		if Modifier(i).String() == s {
 			return Modifier(i)
@@ -360,8 +364,7 @@ func ParseModifier(s string) Modifier {
 	return 0
 }
 
-// ParseAddressingMode ...
-func ParseAddressingMode(s string) AddressingMode {
+func parseAddressingMode(s string) AddressingMode {
 	switch s {
 	case "#":
 		return immediate
