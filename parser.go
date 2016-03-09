@@ -171,24 +171,6 @@ func (m *MARS) ParseWarrior(warrior string) Warrior {
 			}
 		}
 
-		for j := 0; j < len(keys); j++ {
-			if val, ok := labels[keys[j]]; ok {
-				split[1] = strings.Replace(split[1], keys[j], fmt.Sprint(val-i), -1)
-				if len(split) >= 3 {
-					split[2] = strings.Replace(split[2], keys[j], fmt.Sprint(val-i), -1)
-				}
-			}
-		}
-
-		for j := 0; j < len(keys); j++ {
-			if val, ok := equs[keys[j]]; ok {
-				split[1] = strings.Replace(split[1], keys[j], val, -1)
-				if len(split) >= 3 {
-					split[2] = strings.Replace(split[2], keys[j], val, -1)
-				}
-			}
-		}
-
 		var newLine bytes.Buffer
 
 		if len(split) >= 3 {
