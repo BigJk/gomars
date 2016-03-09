@@ -229,6 +229,9 @@ func normalizeCode(s string) string {
 	out = strings.Replace(out, "\n ", "\n", -1)
 	out = strings.Replace(out, ":", "", -1)
 	out = comma.ReplaceAllString(out, " ")
+	for i := 0; i < len(arithOps); i++ {
+		out = strings.Replace(out, " "+arithOps[i]+" ", arithOps[i], -1)
+	}
 	for i := 0; i < len(modifier); i++ {
 		out = strings.Replace(out, modifier[i]+" ", modifier[i], -1)
 	}
