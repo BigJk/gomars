@@ -1,8 +1,8 @@
 package gomars
 
 import (
+	"io/ioutil"
 	"math/rand"
-	"time"
 )
 
 // MARS is the simulator
@@ -19,8 +19,18 @@ type MARS struct {
 
 // CreateMars creates a new MARS
 func CreateMars(coresize, maxProcess, maxCycles, maxLength, minDistance int) MARS {
-	rand.Seed(time.Now().Unix())
 	return MARS{coresize, maxProcess, maxCycles, maxLength, minDistance, CreateCore(coresize), make([]Warrior, 0), 0}
+}
+
+// ParseWarrior ...
+func (m *MARS) ParseWarrior(warrior string) Warrior {
+	return ParseWarrior(m.Coresize, m.Core.SizePSpace, m.MaxCycles, m.MaxProcess, len(m.Warrior), m.MaxLength, m.MinDistance, warrior)
+}
+
+// ParseWarriorFromFile ...
+func (m *MARS) ParseWarriorFromFile(path string) Warrior {
+	w, _ := ioutil.ReadFile(path)
+	return m.ParseWarrior(string(w))
 }
 
 // AddWarriorString adds a warrior from string
@@ -35,22 +45,6 @@ func (m *MARS) AddWarrior(w Warrior) {
 	if w.HasPSpace() {
 		m.Core.DisablePSpace = false
 	}
-}
-
-// PlaceWarrior places a warrior in the core
-func (m *MARS) PlaceWarrior(num, position int, w Warrior) {
-	m.Core.PlaceWarrior(num, position, w.Code)
-	m.Core.Warriors[num].Task = NewTaskQueue(m.MaxProcess)
-	m.Core.Warriors[num].Task.Push(position + w.EntryPoint)
-}
-
-// PlaceRandom places a warrior randomly in the core
-func (m *MARS) PlaceRandom(num int, w Warrior) {
-	pos := random(m.MinDistance, m.Coresize-len(w.Code))
-	for !m.Core.IsEmpty(pos, len(w.Code)) {
-		pos = random(m.MinDistance, m.Coresize-len(w.Code))
-	}
-	m.PlaceWarrior(num, pos, w)
 }
 
 // Clear cleans the MARS
@@ -78,11 +72,11 @@ func (m *MARS) Run(rounds int) []int {
 			m.Core.Memory[j].Empty()
 		}
 
-		m.PlaceWarrior(0, 0, m.Warrior[0])
+		m.Core.PlaceWarrior(0, 0, m.MaxProcess, m.Warrior[0])
 		m.Core.Warriors[0].ID = 0
 
 		for j := 1; j < wc; j++ {
-			m.PlaceRandom(j, m.Warrior[j])
+			m.Core.PlaceRandom(j, m.MinDistance, m.MaxProcess, m.Warrior[j])
 			m.Core.Warriors[j].ID = j
 		}
 

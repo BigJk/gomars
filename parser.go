@@ -3,7 +3,6 @@ package gomars
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"regexp"
 	"sort"
@@ -43,22 +42,16 @@ var modifier = []string{"*", "#", "{", "}", "$", ">", "<", "@"}
 var arithOps = []string{"+", "-", "*", "/", "%"}
 var env = eval.NewEnvironment()
 
-// ParseWarriorFromFile ...
-func (m *MARS) ParseWarriorFromFile(path string) Warrior {
-	w, _ := ioutil.ReadFile(path)
-	return m.ParseWarrior(string(w))
-}
-
 // ParseWarrior ...
-func (m *MARS) ParseWarrior(warrior string) Warrior {
+func ParseWarrior(coresize, pspaceSize, maxCycles, maxProcess, warriors, maxLength, minDistance int, warrior string) Warrior {
 	predefined := make(map[string]int)
-	predefined["CORESIZE"] = m.Coresize
-	predefined["PSPACESIZE"] = len(m.Core.PSpace)
-	predefined["MAXCYCLES"] = m.MaxCycles
-	predefined["MAXPROCESSES"] = m.MaxProcess
-	predefined["WARRIORS"] = len(m.Warrior) // TODO: FIX!
-	predefined["MAXLENGTH"] = m.MaxLength
-	predefined["MINDISTANCE"] = m.MinDistance
+	predefined["CORESIZE"] = coresize
+	predefined["PSPACESIZE"] = pspaceSize
+	predefined["MAXCYCLES"] = maxCycles
+	predefined["MAXPROCESSES"] = maxProcess
+	predefined["WARRIORS"] = warriors
+	predefined["MAXLENGTH"] = maxLength
+	predefined["MINDISTANCE"] = minDistance
 
 	// CONVERT TO STRING AND NORMALIZE CODE
 	warrior = normalizeCode(warrior)

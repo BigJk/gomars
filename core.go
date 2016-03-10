@@ -54,11 +54,22 @@ func (c *Core) IsEmpty(s, e int) bool {
 }
 
 // PlaceWarrior places a warrior in the core
-func (c *Core) PlaceWarrior(num, position int, commands []Command) {
+func (c *Core) PlaceWarrior(num, position, maxProcess int, w Warrior) {
 	c.Warriors[num] = &CoreWarrior{}
-	for i := 0; i < len(commands); i++ {
-		c.Memory[position+i] = commands[i]
+	for i := 0; i < len(w.Code); i++ {
+		c.Memory[position+i] = w.Code[i]
 	}
+	c.Warriors[num].Task = NewTaskQueue(maxProcess)
+	c.Warriors[num].Task.Push(position + w.EntryPoint)
+}
+
+// PlaceRandom ...
+func (c *Core) PlaceRandom(num, minDistance, maxProcess int, w Warrior) {
+	pos := random(minDistance, len(c.Memory)-len(w.Code))
+	for !c.IsEmpty(pos, len(w.Code)) {
+		pos = random(minDistance, len(c.Memory)-len(w.Code))
+	}
+	c.PlaceWarrior(num, pos, maxProcess, w)
 }
 
 // GetAddress returns the address and the postincrement address
